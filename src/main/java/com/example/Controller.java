@@ -421,134 +421,49 @@ public class Controller {
     }
 
     void calculateSJF(int[] arrival, int[] burst, int n) {
-    processTable.getItems().clear();
+        processTable.getItems().clear();
 
-    int[] completion = new int[n];
-    int[] turnaround = new int[n];
-    int[] waiting = new int[n];
-    int[] response = new int[n];
-    boolean[] done = new boolean[n];
+        int[] completion = new int[n];
+        int[] turnaround = new int[n];
+        int[] waiting = new int[n];
+        int[] response = new int[n];
+        boolean[] done = new boolean[n];
 
-    int currentTime = 0;
-    int completed = 0;
-    double totalTurnaround = 0;
-    double totalWaiting = 0;
+        int currentTime = 0;
+        int completed = 0;
+        double totalTurnaround = 0;
+        double totalWaiting = 0;
 
-    ObservableList<Process> processList = FXCollections.observableArrayList();
+        ObservableList<Process> processList = FXCollections.observableArrayList();
 
-    while (completed < n) {
-        int idx = -1;
-        int minBurst = Integer.MAX_VALUE;
+        while (completed < n) {
+            int idx = -1;
+            int minBurst = Integer.MAX_VALUE;
 
-        // Find the next process with shortest burst that has arrived
-        for (int i = 0; i < n; i++) {
-            if (!done[i] && arrival[i] <= currentTime && burst[i] < minBurst) {
-                minBurst = burst[i];
-                idx = i;
+            // Find the next process with shortest burst that has arrived
+            for (int i = 0; i < n; i++) {
+                if (!done[i] && arrival[i] <= currentTime && burst[i] < minBurst) {
+                    minBurst = burst[i];
+                    idx = i;
+                }
             }
-        }
 
-        if (idx == -1) {
-            currentTime++; // no process has arrived yet, increment time
-            continue;
-        }
-
-        currentTime += burst[idx];
-        completion[idx] = currentTime;
-        turnaround[idx] = completion[idx] - arrival[idx];
-        waiting[idx] = turnaround[idx] - burst[idx];
-        response[idx] = waiting[idx]; // same as waiting for non-preemptive SJF
-
-        totalTurnaround += turnaround[idx];
-        totalWaiting += waiting[idx];
-
-        done[idx] = true;
-        completed++;
-
-        processList.add(new Process(
-                "P" + (idx + 1),
-                arrival[idx],
-                burst[idx],
-                completion[idx],
-                turnaround[idx],
-                waiting[idx],
-                response[idx]));
-    }
-
-    displayAverage.setVisible(true);
-
-    double avgTurnaround = totalTurnaround / n;
-    double avgWaiting = totalWaiting / n;
-
-    avgturnaround.setText(String.format("Turnaround Time: %.2f", avgTurnaround));
-    avgwait.setText(String.format("Waiting Time: %.2f", avgWaiting));
-
-    processTable.setItems(processList);
-
-    processTable.setFixedCellSize(50);
-    processTable.prefHeightProperty().bind(
-            processTable.fixedCellSizeProperty().multiply(processTable.getItems().size()).add(35));
-    processTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-    chart.setVisible(true);
-    chart.setManaged(true);
-    Pane ganttChart = GanttChart.buildSJFGanttChart(arrival, burst, n);
-    chartContainer.getChildren().clear();
-    chartContainer.getChildren().add(ganttChart);
-}
-
-
-    void calculateSRT(int[] arrival, int[] burst, int n) {
-    processTable.getItems().clear();
-
-    int[] completion = new int[n];
-    int[] turnaround = new int[n];
-    int[] waiting = new int[n];
-    int[] response = new int[n];
-    boolean[] started = new boolean[n]; // to track first response
-
-    int[] remaining = burst.clone(); // remaining burst times
-    int completed = 0;
-    int currentTime = 0;
-    double totalTurnaround = 0;
-    double totalWaiting = 0;
-
-    ObservableList<Process> processList = FXCollections.observableArrayList();
-
-    while (completed < n) {
-        int idx = -1;
-        int minRemaining = Integer.MAX_VALUE;
-
-        // find process with shortest remaining time that has arrived
-        for (int i = 0; i < n; i++) {
-            if (arrival[i] <= currentTime && remaining[i] > 0 && remaining[i] < minRemaining) {
-                minRemaining = remaining[i];
-                idx = i;
+            if (idx == -1) {
+                currentTime++; // no process has arrived yet, increment time
+                continue;
             }
-        }
 
-        if (idx == -1) {
-            currentTime++; // no process is ready
-            continue;
-        }
-
-        // record first response time
-        if (!started[idx]) {
-            response[idx] = currentTime - arrival[idx];
-            started[idx] = true;
-        }
-
-        remaining[idx]--; // execute 1 unit
-        currentTime++;
-
-        if (remaining[idx] == 0) {
-            completed++;
+            currentTime += burst[idx];
             completion[idx] = currentTime;
             turnaround[idx] = completion[idx] - arrival[idx];
             waiting[idx] = turnaround[idx] - burst[idx];
+            response[idx] = waiting[idx]; // same as waiting for non-preemptive SJF
 
             totalTurnaround += turnaround[idx];
             totalWaiting += waiting[idx];
+
+            done[idx] = true;
+            completed++;
 
             processList.add(new Process(
                     "P" + (idx + 1),
@@ -559,265 +474,346 @@ public class Controller {
                     waiting[idx],
                     response[idx]));
         }
+
+        displayAverage.setVisible(true);
+
+        double avgTurnaround = totalTurnaround / n;
+        double avgWaiting = totalWaiting / n;
+
+        avgturnaround.setText(String.format("Turnaround Time: %.2f", avgTurnaround));
+        avgwait.setText(String.format("Waiting Time: %.2f", avgWaiting));
+
+        processTable.setItems(processList);
+
+        processTable.setFixedCellSize(50);
+        processTable.prefHeightProperty().bind(
+                processTable.fixedCellSizeProperty().multiply(processTable.getItems().size()).add(35));
+        processTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        chart.setVisible(true);
+        chart.setManaged(true);
+        Pane ganttChart = GanttChart.buildSJFGanttChart(arrival, burst, n);
+        chartContainer.getChildren().clear();
+        chartContainer.getChildren().add(ganttChart);
     }
 
-    displayAverage.setVisible(true);
+    void calculateSRT(int[] arrival, int[] burst, int n) {
+        processTable.getItems().clear();
 
-    double avgTurnaround = totalTurnaround / n;
-    double avgWaiting = totalWaiting / n;
+        int[] completion = new int[n];
+        int[] turnaround = new int[n];
+        int[] waiting = new int[n];
+        int[] response = new int[n];
+        boolean[] started = new boolean[n]; // to track first response
 
-    avgturnaround.setText(String.format("Turnaround Time: %.2f", avgTurnaround));
-    avgwait.setText(String.format("Waiting Time: %.2f", avgWaiting));
+        int[] remaining = burst.clone(); // remaining burst times
+        int completed = 0;
+        int currentTime = 0;
+        double totalTurnaround = 0;
+        double totalWaiting = 0;
 
-    processTable.setItems(processList);
+        ObservableList<Process> processList = FXCollections.observableArrayList();
 
-    processTable.setFixedCellSize(50);
-    processTable.prefHeightProperty().bind(
-            processTable.fixedCellSizeProperty().multiply(processTable.getItems().size()).add(35));
-    processTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        while (completed < n) {
+            int idx = -1;
+            int minRemaining = Integer.MAX_VALUE;
 
-    chart.setVisible(true);
-    chart.setManaged(true);
-    Pane ganttChart = GanttChart.buildSRTGanttChart(arrival, burst, n);
-    chartContainer.getChildren().clear();
-    chartContainer.getChildren().add(ganttChart);
-}
-
-
-    void calculateRR(int[] arrival, int[] burst, int n) {
-    processTable.getItems().clear();
-
-    // Get time quantum from TextField
-    String input = RRvalue.getText().trim();
-    String[] tokens = input.split("\\s+");
-
-    if (tokens.length != 1) {
-        timeQRR.setText("Please enter only 1 time quantum!");
-        return;
-    }
-
-    int timeQuantum;
-    try {
-        timeQuantum = Integer.parseInt(tokens[0]);
-        if (timeQuantum <= 0)
-            throw new NumberFormatException();
-    } catch (NumberFormatException e) {
-        timeQRR.setText("Invalid time quantum!");
-        return;
-    }
-
-    int[] completion = new int[n];
-    int[] turnaround = new int[n];
-    int[] waiting = new int[n];
-    int[] response = new int[n];
-    boolean[] started = new boolean[n];
-    int[] remaining = burst.clone();
-
-    int currentTime = 0;
-    int completed = 0;
-    double totalTurnaround = 0;
-    double totalWaiting = 0;
-
-    Queue<Integer> queue = new LinkedList<>();
-    boolean[] inQueue = new boolean[n];
-
-    for (int i = 0; i < n; i++) {
-        if (arrival[i] <= currentTime) {
-            queue.add(i);
-            inQueue[i] = true;
-        }
-    }
-
-    while (completed < n) {
-        if (queue.isEmpty()) {
-            currentTime++;
+            // find process with shortest remaining time that has arrived
             for (int i = 0; i < n; i++) {
-                if (arrival[i] <= currentTime && remaining[i] > 0 && !inQueue[i]) {
-                    queue.add(i);
-                    inQueue[i] = true;
+                if (arrival[i] <= currentTime && remaining[i] > 0 && remaining[i] < minRemaining) {
+                    minRemaining = remaining[i];
+                    idx = i;
                 }
             }
-            continue;
+
+            if (idx == -1) {
+                currentTime++; // no process is ready
+                continue;
+            }
+
+            // record first response time
+            if (!started[idx]) {
+                response[idx] = currentTime - arrival[idx];
+                started[idx] = true;
+            }
+
+            remaining[idx]--; // execute 1 unit
+            currentTime++;
+
+            if (remaining[idx] == 0) {
+                completed++;
+                completion[idx] = currentTime;
+                turnaround[idx] = completion[idx] - arrival[idx];
+                waiting[idx] = turnaround[idx] - burst[idx];
+
+                totalTurnaround += turnaround[idx];
+                totalWaiting += waiting[idx];
+
+                processList.add(new Process(
+                        "P" + (idx + 1),
+                        arrival[idx],
+                        burst[idx],
+                        completion[idx],
+                        turnaround[idx],
+                        waiting[idx],
+                        response[idx]));
+            }
         }
 
-        int idx = queue.poll();
-        inQueue[idx] = false;
+        displayAverage.setVisible(true);
 
-        if (!started[idx]) {
-            response[idx] = currentTime - arrival[idx];
-            started[idx] = true;
+        double avgTurnaround = totalTurnaround / n;
+        double avgWaiting = totalWaiting / n;
+
+        avgturnaround.setText(String.format("Turnaround Time: %.2f", avgTurnaround));
+        avgwait.setText(String.format("Waiting Time: %.2f", avgWaiting));
+
+        processTable.setItems(processList);
+
+        processTable.setFixedCellSize(50);
+        processTable.prefHeightProperty().bind(
+                processTable.fixedCellSizeProperty().multiply(processTable.getItems().size()).add(35));
+        processTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        chart.setVisible(true);
+        chart.setManaged(true);
+        Pane ganttChart = GanttChart.buildSRTGanttChart(arrival, burst, n);
+        chartContainer.getChildren().clear();
+        chartContainer.getChildren().add(ganttChart);
+    }
+
+    void calculateRR(int[] arrival, int[] burst, int n) {
+        processTable.getItems().clear();
+
+        // Get time quantum from TextField
+        String input = RRvalue.getText().trim();
+        String[] tokens = input.split("\\s+");
+
+        if (tokens.length != 1) {
+            timeQRR.setText("Please enter only 1 time quantum!");
+            return;
         }
 
-        int execTime = Math.min(timeQuantum, remaining[idx]);
-        remaining[idx] -= execTime;
-        currentTime += execTime;
+        int timeQuantum;
+        try {
+            timeQuantum = Integer.parseInt(tokens[0]);
+            if (timeQuantum <= 0)
+                throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            timeQRR.setText("Invalid time quantum!");
+            return;
+        }
+
+        int[] completion = new int[n];
+        int[] turnaround = new int[n];
+        int[] waiting = new int[n];
+        int[] response = new int[n];
+        boolean[] started = new boolean[n];
+        int[] remaining = burst.clone();
+
+        int currentTime = 0;
+        int completed = 0;
+        double totalTurnaround = 0;
+        double totalWaiting = 0;
+
+        Queue<Integer> queue = new LinkedList<>();
+        boolean[] inQueue = new boolean[n];
 
         for (int i = 0; i < n; i++) {
-            if (arrival[i] > currentTime - execTime && arrival[i] <= currentTime && remaining[i] > 0 && !inQueue[i]) {
+            if (arrival[i] <= currentTime) {
                 queue.add(i);
                 inQueue[i] = true;
             }
         }
 
-        if (remaining[idx] > 0) {
-            queue.add(idx);
-            inQueue[idx] = true;
-        } else {
-            completed++;
-            completion[idx] = currentTime;
-            turnaround[idx] = completion[idx] - arrival[idx];
-            waiting[idx] = turnaround[idx] - burst[idx];
+        while (completed < n) {
+            if (queue.isEmpty()) {
+                currentTime++;
+                for (int i = 0; i < n; i++) {
+                    if (arrival[i] <= currentTime && remaining[i] > 0 && !inQueue[i]) {
+                        queue.add(i);
+                        inQueue[i] = true;
+                    }
+                }
+                continue;
+            }
 
-            totalTurnaround += turnaround[idx];
-            totalWaiting += waiting[idx];
+            int idx = queue.poll();
+            inQueue[idx] = false;
+
+            if (!started[idx]) {
+                response[idx] = currentTime - arrival[idx];
+                started[idx] = true;
+            }
+
+            int execTime = Math.min(timeQuantum, remaining[idx]);
+            remaining[idx] -= execTime;
+            currentTime += execTime;
+
+            for (int i = 0; i < n; i++) {
+                if (arrival[i] > currentTime - execTime && arrival[i] <= currentTime && remaining[i] > 0
+                        && !inQueue[i]) {
+                    queue.add(i);
+                    inQueue[i] = true;
+                }
+            }
+
+            if (remaining[idx] > 0) {
+                queue.add(idx);
+                inQueue[idx] = true;
+            } else {
+                completed++;
+                completion[idx] = currentTime;
+                turnaround[idx] = completion[idx] - arrival[idx];
+                waiting[idx] = turnaround[idx] - burst[idx];
+
+                totalTurnaround += turnaround[idx];
+                totalWaiting += waiting[idx];
+            }
         }
+
+        ObservableList<Process> processList = FXCollections.observableArrayList();
+        for (int i = 0; i < n; i++) {
+            processList.add(new Process(
+                    "P" + (i + 1),
+                    arrival[i],
+                    burst[i],
+                    completion[i],
+                    turnaround[i],
+                    waiting[i],
+                    response[i]));
+        }
+
+        displayAverage.setVisible(true);
+        avgturnaround.setText(String.format("Turnaround Time: %.2f", totalTurnaround / n));
+        avgwait.setText(String.format("Waiting Time: %.2f", totalWaiting / n));
+
+        processTable.setItems(processList);
+        processTable.setFixedCellSize(50);
+        processTable.prefHeightProperty().bind(
+                processTable.fixedCellSizeProperty().multiply(processTable.getItems().size()).add(35));
+        processTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        chart.setVisible(true);
+        chart.setManaged(true);
+
+        Pane rrChart = GanttChart.buildRRGanttChart(arrival, burst, n, timeQuantum);
+        chartContainer.getChildren().clear();
+        chartContainer.getChildren().add(rrChart);
     }
-
-    ObservableList<Process> processList = FXCollections.observableArrayList();
-    for (int i = 0; i < n; i++) {
-        processList.add(new Process(
-                "P" + (i + 1),
-                arrival[i],
-                burst[i],
-                completion[i],
-                turnaround[i],
-                waiting[i],
-                response[i]));
-    }
-
-    displayAverage.setVisible(true);
-    avgturnaround.setText(String.format("Turnaround Time: %.2f", totalTurnaround / n));
-    avgwait.setText(String.format("Waiting Time: %.2f", totalWaiting / n));
-
-    processTable.setItems(processList);
-    processTable.setFixedCellSize(50);
-    processTable.prefHeightProperty().bind(
-            processTable.fixedCellSizeProperty().multiply(processTable.getItems().size()).add(35));
-    processTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-    chart.setVisible(true);
-    chart.setManaged(true);
-
-    Pane rrChart = GanttChart.buildRRGanttChart(arrival, burst, n, timeQuantum);
-    chartContainer.getChildren().clear();
-    chartContainer.getChildren().add(rrChart);
-}
-
 
     void calculateMLFQ(int[] arrival, int[] burst, int n) {
-    processTable.getItems().clear();
+        processTable.getItems().clear();
 
-    int tq1, tq2;
-    try {
-        tq1 = Integer.parseInt(T1Field.getText());
-        tq2 = Integer.parseInt(T2field.getText());
-    } catch (NumberFormatException e) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, "Please enter valid integers for T1 and T2!");
-        alert.show();
-        return;
-    }
-
-    int[] remaining = Arrays.copyOf(burst, n);
-    int[] completion = new int[n];
-    int[] turnaround = new int[n];
-    int[] waiting = new int[n];
-    int[] response = new int[n];
-    boolean[] started = new boolean[n];
-
-    double totalTurnaround = 0;
-    double totalWaiting = 0;
-
-    int currentTime = 0;
-    Queue<Integer> q1 = new LinkedList<>();
-    Queue<Integer> q2 = new LinkedList<>();
-
-    for (int i = 0; i < n; i++) {
-        if (arrival[i] <= currentTime) {
-            q1.add(i);
+        int tq1, tq2;
+        try {
+            tq1 = Integer.parseInt(T1Field.getText());
+            tq2 = Integer.parseInt(T2field.getText());
+        } catch (NumberFormatException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Please enter valid integers for T1 and T2!");
+            alert.show();
+            return;
         }
-    }
 
-    ObservableList<Process> processList = FXCollections.observableArrayList();
+        int[] remaining = Arrays.copyOf(burst, n);
+        int[] completion = new int[n];
+        int[] turnaround = new int[n];
+        int[] waiting = new int[n];
+        int[] response = new int[n];
+        boolean[] started = new boolean[n];
 
-    while (!q1.isEmpty() || !q2.isEmpty() || Arrays.stream(remaining).anyMatch(r -> r > 0)) {
+        double totalTurnaround = 0;
+        double totalWaiting = 0;
+
+        int currentTime = 0;
+        Queue<Integer> q1 = new LinkedList<>();
+        Queue<Integer> q2 = new LinkedList<>();
+
         for (int i = 0; i < n; i++) {
-            if (arrival[i] <= currentTime && remaining[i] > 0 && !q1.contains(i) && !q2.contains(i)) {
+            if (arrival[i] <= currentTime) {
                 q1.add(i);
             }
         }
 
-        if (!q1.isEmpty()) {
-            int i = q1.poll();
-            if (!started[i]) {
-                response[i] = currentTime - arrival[i];
-                started[i] = true;
-            }
-            int exec = Math.min(tq1, remaining[i]);
-            currentTime += exec;
-            remaining[i] -= exec;
+        ObservableList<Process> processList = FXCollections.observableArrayList();
 
-            if (remaining[i] > 0) {
-                q2.add(i);
+        while (!q1.isEmpty() || !q2.isEmpty() || Arrays.stream(remaining).anyMatch(r -> r > 0)) {
+            for (int i = 0; i < n; i++) {
+                if (arrival[i] <= currentTime && remaining[i] > 0 && !q1.contains(i) && !q2.contains(i)) {
+                    q1.add(i);
+                }
+            }
+
+            if (!q1.isEmpty()) {
+                int i = q1.poll();
+                if (!started[i]) {
+                    response[i] = currentTime - arrival[i];
+                    started[i] = true;
+                }
+                int exec = Math.min(tq1, remaining[i]);
+                currentTime += exec;
+                remaining[i] -= exec;
+
+                if (remaining[i] > 0) {
+                    q2.add(i);
+                } else {
+                    completion[i] = currentTime;
+                }
+
+            } else if (!q2.isEmpty()) {
+                int i = q2.poll();
+                if (!started[i]) {
+                    response[i] = currentTime - arrival[i];
+                    started[i] = true;
+                }
+                int exec = Math.min(tq2, remaining[i]);
+                currentTime += exec;
+                remaining[i] -= exec;
+
+                if (remaining[i] > 0) {
+                    q2.add(i);
+                } else {
+                    completion[i] = currentTime;
+                }
+
             } else {
-                completion[i] = currentTime;
+                currentTime++;
             }
-
-        } else if (!q2.isEmpty()) {
-            int i = q2.poll();
-            if (!started[i]) {
-                response[i] = currentTime - arrival[i];
-                started[i] = true;
-            }
-            int exec = Math.min(tq2, remaining[i]);
-            currentTime += exec;
-            remaining[i] -= exec;
-
-            if (remaining[i] > 0) {
-                q2.add(i);
-            } else {
-                completion[i] = currentTime;
-            }
-
-        } else {
-            currentTime++;
         }
+
+        for (int i = 0; i < n; i++) {
+            turnaround[i] = completion[i] - arrival[i];
+            waiting[i] = turnaround[i] - burst[i];
+
+            totalTurnaround += turnaround[i];
+            totalWaiting += waiting[i];
+
+            processList.add(new Process(
+                    "P" + (i + 1),
+                    arrival[i],
+                    burst[i],
+                    completion[i],
+                    turnaround[i],
+                    waiting[i],
+                    response[i]));
+        }
+
+        displayAverage.setVisible(true);
+        avgturnaround.setText(String.format("Turnaround Time: %.2f", totalTurnaround / n));
+        avgwait.setText(String.format("Waiting Time: %.2f", totalWaiting / n));
+
+        processTable.setItems(processList);
+        processTable.setFixedCellSize(50);
+        processTable.prefHeightProperty().bind(
+                processTable.fixedCellSizeProperty().multiply(processTable.getItems().size()).add(35));
+        processTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        chart.setVisible(true);
+        chart.setManaged(true);
+
+        Pane ganttChart = GanttChart.buildMLFQGanttChart(arrival, burst, n, tq1, tq2);
+        chartContainer.getChildren().clear();
+        chartContainer.getChildren().add(ganttChart);
     }
-
-    for (int i = 0; i < n; i++) {
-        turnaround[i] = completion[i] - arrival[i];
-        waiting[i] = turnaround[i] - burst[i];
-
-        totalTurnaround += turnaround[i];
-        totalWaiting += waiting[i];
-
-        processList.add(new Process(
-                "P" + (i + 1),
-                arrival[i],
-                burst[i],
-                completion[i],
-                turnaround[i],
-                waiting[i],
-                response[i]));
-    }
-
-
-    displayAverage.setVisible(true);
-    avgturnaround.setText(String.format("Turnaround Time: %.2f", totalTurnaround / n));
-    avgwait.setText(String.format("Waiting Time: %.2f", totalWaiting / n));
-
-    processTable.setItems(processList);
-    processTable.setFixedCellSize(50);
-    processTable.prefHeightProperty().bind(
-            processTable.fixedCellSizeProperty().multiply(processTable.getItems().size()).add(35));
-    processTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-    chart.setVisible(true);
-    chart.setManaged(true);
-
-    Pane ganttChart = GanttChart.buildMLFQGanttChart(arrival, burst, n, tq1, tq2);
-    chartContainer.getChildren().clear();
-    chartContainer.getChildren().add(ganttChart);
-}
-
 
 }

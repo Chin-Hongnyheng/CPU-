@@ -104,7 +104,7 @@
                   <Font name="Times New Roman Bold" size="24.0" />
                </font>
             </Label>
-            <Pane fx:id="chartContainer" layoutX="230.0" layoutY="76.0" prefHeight="66.0" prefWidth="276.0" />
+            <Pane fx:id="chartContainer" layoutX="157.0" layoutY="76.0" prefHeight="66.0" prefWidth="276.0" />
             <Label fx:id="displayAverage" layoutX="14.0" layoutY="55.0" prefHeight="48.0" prefWidth="89.0" text="Average: " visible="false">
                <font>
                   <Font name="Times New Roman Bold" size="20.0" />
